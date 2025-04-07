@@ -202,13 +202,13 @@ def find_files_in_subdir(
     return output
 
 
-def update_client_version(log: logging.Logger) -> None:
+def update_client_version(addon_client_dir: str, log: logging.Logger) -> None:
     """Update version in client code if version.py is present."""
-    if not ADDON_CLIENT_DIR:
+    if not addon_client_dir:
         return
 
     version_path: str = os.path.join(
-        CLIENT_ROOT, ADDON_CLIENT_DIR, "version.py"
+        CLIENT_ROOT, addon_client_dir, "version.py"
     )
     if not os.path.exists(version_path):
         log.debug("Creating version.py in client directory")
@@ -237,7 +237,7 @@ def build_frontend() -> None:
         raise RuntimeError(msg)
 
 
-def get_client_files_mapping() -> list[Tuple[str, str]]:
+def get_client_files_mapping(addon_client_dir: str) -> set[FileMapping]:
     """Mapping of source client code files to destination paths.
 
     Example output:
@@ -253,42 +253,51 @@ def get_client_files_mapping() -> list[Tuple[str, str]]:
         ]
 
     Returns:
-        list[tuple[str, str]]: List of path mappings to copy. The destination
+        list[FileMapping]: List of path mappings to copy. The destination
             path is relative to expected output directory.
 
     """
     # Add client code content to zip
-    if ADDON_CLIENT_DIR:
-        client_code_dir: str = os.path.join(CLIENT_ROOT, ADDON_CLIENT_DIR)
+    if addon_client_dir:
+        client_code_dir: str = os.path.join(CLIENT_ROOT, addon_client_dir)
     else:
         client_code_dir = CLIENT_ROOT
     mapping = []
     for path, sub_path in find_files_in_subdir(client_code_dir):
-        if ADDON_CLIENT_DIR:
-            client_dir = os.path.join(ADDON_CLIENT_DIR, sub_path)
+        if addon_client_dir:
+            client_dir = os.path.join(addon_client_dir, sub_path)
         else:
             client_dir = sub_path
         mapping.append((path, client_dir))
 
     license_path = os.path.join(CURRENT_ROOT, "LICENSE")
     if os.path.exists(license_path):
-        mapping.append((license_path, f"{ADDON_CLIENT_DIR}/LICENSE"))
-    return mapping
+        mapping.append((license_path, f"{addon_client_dir}/LICENSE"))
+    return set(mapping)
 
 
-def get_client_zip_content(log: logging.Logger) -> io.BytesIO:
+def get_client_zip_content(
+        addon_client_dir: str, log: logging.Logger) -> io.BytesIO:
     """Prepare client code zip.
+
+    Args:
+        addon_client_dir (str): Client directory path.
+        log (logging.Logger): Logger object.
 
     Returns:
         io.BytesIO: BytesIO object with zipped client code.
 
     """
     log.info("Preparing client code zip")
-    files_mapping: list[Tuple[str, str]] = get_client_files_mapping()
+    files_mapping: set[FileMapping] = get_client_files_mapping(
+        addon_client_dir)
     stream = io.BytesIO()
     with ZipFileLongPaths(stream, "w", zipfile.ZIP_DEFLATED) as zipf:
         for src_path, subpath in files_mapping:
-            zipf.write(src_path, subpath)
+            if isinstance(src_path, io.BytesIO):
+                zipf.writestr(subpath, src_path.getvalue())
+            else:
+                zipf.write(src_path, subpath)
     stream.seek(0)
     return stream
 
@@ -297,7 +306,7 @@ def get_base_files_mapping() -> list[FileMapping]:
     """Get mapping of server side files to copy.
 
     Returns:
-        list[tuple[str, str]]: List of tuples with source file and destination
+        list: FileMapping with source file and destination
             subpath.
 
     """
@@ -337,11 +346,12 @@ def get_base_files_mapping() -> list[FileMapping]:
 
 
 def copy_client_code(
-        output_dir: str, log: logging.Logger) -> None:
+        output_dir: str, addon_client_dir: str, log: logging.Logger) -> None:
     """Copies server side folders to 'addon_package_dir'.
 
     Args:
         output_dir (str): Output directory path.
+        addon_client_dir (str): Client directory path.
         log (logging.Logger): Logger object.
 
     """
@@ -355,9 +365,12 @@ def copy_client_code(
         shutil.rmtree(full_output_path)
     os.makedirs(full_output_path, exist_ok=True)
 
-    for src_path, dst_subpath in get_client_files_mapping():
+    for src_path, dst_subpath in get_client_files_mapping(addon_client_dir):
         dst_path = os.path.join(full_output_path, dst_subpath)
-        safe_copy_file(src_path, dst_path)
+        if isinstance(src_path, io.BytesIO):
+            Path(dst_path).write_bytes(src_path.getvalue())
+        else:
+            safe_copy_file(src_path, dst_path)
 
     log.info("Client copy finished")
 
@@ -410,7 +423,7 @@ def create_addon_package(
 
     Args:
         output_dir (str): Directory path to output package.
-        files_mapping (List[FileMapping]): List of tuples with source file
+        files_mapping (list[FileMapping]): List of tuples with source file
             and destination subpath.
         log (logging.Logger): Logger object
 
@@ -435,6 +448,7 @@ def create_addon_package(
 
 def main(
     output_dir: Optional[str] = None,
+    addon_client_dir: Optional[str] = None,
     *,
     skip_zip: Optional[bool] = False,
     only_client: Optional[bool] = False
@@ -451,26 +465,24 @@ def main(
     if not output_dir:
         output_dir = os.path.join(CURRENT_ROOT, "package")
 
-    has_client_code = bool(ADDON_CLIENT_DIR)
-    if has_client_code:
-        if ADDON_CLIENT_DIR:
-            client_dir: str = os.path.join(CLIENT_ROOT, ADDON_CLIENT_DIR)
-        else:
-            client_dir = CLIENT_ROOT
+    # has_client_code = bool(addon_client_dir)
+    if addon_client_dir:
+        client_dir: str = os.path.join(CLIENT_ROOT, addon_client_dir)
+
         if not os.path.exists(client_dir):
             msg = (
                 f"Client directory was not found '{client_dir}'."
                 " Please check 'client_dir' in 'package.py'."
             )
             raise RuntimeError(msg)
-        update_client_version(log)
+        update_client_version(addon_client_dir, log)
 
     if only_client:
-        if not has_client_code:
+        if not addon_client_dir:
             msg = "Client code is not available. Skipping"
             raise RuntimeError(msg)
 
-        copy_client_code(output_dir, log)
+        copy_client_code(output_dir, addon_client_dir, log)
         return
 
     log.info("Preparing package for %s, %s", ADDON_NAME, ADDON_VERSION)
@@ -481,9 +493,10 @@ def main(
     files_mapping: list[FileMapping] = []
     files_mapping.extend(get_base_files_mapping())
 
-    if has_client_code:
+    if addon_client_dir:
         files_mapping.append(
-            (get_client_zip_content(log), "private/client.zip")
+            (get_client_zip_content(
+                addon_client_dir, log), "private/client.zip")
         )
 
     # Skip server zipping
@@ -538,6 +551,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=level)
     main(
         args.output_dir,
+        ADDON_CLIENT_DIR,
         skip_zip=args.skip_zip,
         only_client=args.only_client
     )
