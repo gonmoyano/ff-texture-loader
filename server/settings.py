@@ -1,11 +1,9 @@
 """Settings for the addon."""
-from __future__ import annotations
-
-from typing import Any
+from typing import Any, Dict
 
 from ayon_server.settings import BaseSettingsModel
 
-DEFAULT_VALUES: dict[str, Any] = {}
+DEFAULT_VALUES: Dict[str, Any] = {}
 
 
 class MySettings(BaseSettingsModel):

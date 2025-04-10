@@ -1,6 +1,4 @@
 """Server package."""
-from __future__ import annotations
-
 from typing import Type
 
 from ayon_server.addons import BaseServerAddon
