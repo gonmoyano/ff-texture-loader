@@ -52,10 +52,10 @@ PRIVATE_ROOT: str = os.path.join(CURRENT_ROOT, "private")
 PUBLIC_ROOT: str = os.path.join(CURRENT_ROOT, "public")
 CLIENT_ROOT: str = os.path.join(CURRENT_ROOT, "client")
 
-VERSION_PY_CONTENT = \
+VERSION_PY_CONTENT = (
     f'''"""Package declaring AYON addon '{ADDON_NAME}' version."""
 __version__ = "{ADDON_VERSION}"
-'''
+''')
 
 # Patterns of directories to be skipped for server part of addon
 IGNORE_DIR_PATTERNS: list[Pattern] = [
@@ -154,10 +154,10 @@ def find_files_in_subdir(
     ignore_file_patterns: Optional[list[Pattern]] = None,
     ignore_dir_patterns: Optional[list[Pattern]] = None
 ) -> list[FileMapping]:
-    """Find all files to copy in subdirectories of given path.
+    """Find all files to copy in subdirectories of the given path.
 
     All files that match any of the patterns in 'ignore_file_patterns' will
-        be skipped and any directories that match any of the patterns in
+        be skipped, and any directories that match any of the patterns in
         'ignore_dir_patterns' will be skipped with all subfiles.
 
     Args:
