@@ -21,5 +21,5 @@ client_dir = None
 # - addon with specified version range must exist to be able to use this addon
 ayon_required_addons = {}
 # Mapping of addon name to version requirements
-# - if addon is used in same bundle the version range must be valid
+# - if addon is used in the same bundle, the version range must be valid
 ayon_compatible_addons = {}
