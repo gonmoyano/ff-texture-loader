@@ -182,5 +182,15 @@ update_placeholder()
                 </scriptItem>
             </subMenu>
         </subMenu>
+        <subMenu id="fireframe_menu">
+            <label>Fireframe</label>
+            <scriptItem id="texture_loader">
+                <label>Texture Loader</label>
+                <scriptCode><![CDATA[
+import hou
+hou.ui.displayMessage("Texture Loader Addon loaded successfully")
+]]></scriptCode>
+            </scriptItem>
+        </subMenu>
     </menuBar>
 </mainMenu>
