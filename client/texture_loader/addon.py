@@ -1,7 +1,7 @@
 """Texture Loader addon entry point."""
 
 import os
-from typing import Any, Dict, List
+from typing import Any, ClassVar, Dict, List
 
 from ayon_core.addon import AYONAddon, IPluginPaths
 from ayon_core.lib import CacheItem
@@ -14,6 +14,7 @@ class TextureLoaderAddon(AYONAddon, IPluginPaths):
 
     name = "texture_loader"
     version = __version__
+    hosts: ClassVar[List[str]] = ["maya", "nuke", "houdini"]
 
     def initialize(self, studio_settings: Dict[str, Any]) -> None:
         """Initialize the addon."""
@@ -32,6 +33,7 @@ class TextureLoaderAddon(AYONAddon, IPluginPaths):
 
     def install(self) -> None:
         """Install host-specific menus."""
+        self.log.debug("Texture Loader install hook triggered")
         host = os.environ.get("AYON_HOST")
         if host == "maya":
             try:
