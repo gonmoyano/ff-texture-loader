@@ -1,12 +1,14 @@
 """Nuke integration for the Texture Loader addon."""
 
 import nuke
+import logging
 
+log = logging.getLogger(__name__)
 
 def install() -> None:
     """Create Fireframe menu with Texture Loader item in Nuke."""
 
-    self.log.info("INSTALL FOR NUKE EXECUTED SUCCESSFULLY")
+    log.info("INSTALL FOR NUKE EXECUTED SUCCESSFULLY")
 
     toolbar = nuke.menu("Nuke")
     fireframe_menu = toolbar.findItem("Fireframe")
