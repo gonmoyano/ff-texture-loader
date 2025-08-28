@@ -1,16 +1,16 @@
 # Required: lower case addon name e.g. 'deadline', otherwise addon
 #   will be invalid
-name = ""
+name = "texture_loader"
 
 # Optional: Addon title shown in UI, 'name' is used by default e.g. 'Deadline'
-title = ""
+title = "Texture Loader"
 
 # Required: Valid semantic version (https://semver.org/)
-version = "0.0.0"
+version = "0.0.1"
 
 # Name of client code directory imported in AYON launcher
 # - do not specify if there is no client code
-client_dir = None
+client_dir = "texture_loader"
 
 # Version compatibility with AYON server
 # ayon_server_version = ">=1.0.7"
@@ -23,3 +23,5 @@ ayon_required_addons = {}
 # Mapping of addon name to version requirements
 # - if addon is used in the same bundle, the version range must be valid
 ayon_compatible_addons = {}
+
+plugin_for = ["houdini"]

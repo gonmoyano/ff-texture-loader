@@ -5,6 +5,9 @@ import nuke
 
 def install() -> None:
     """Create Fireframe menu with Texture Loader item in Nuke."""
+
+    self.log.info("INSTALL FOR NUKE EXECUTED SUCCESSFULLY")
+
     toolbar = nuke.menu("Nuke")
     fireframe_menu = toolbar.findItem("Fireframe")
     if fireframe_menu is None:
